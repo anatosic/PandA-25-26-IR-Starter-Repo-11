@@ -7,10 +7,10 @@ WHAT'S NEW IN PART 11. A positional Index. It's almost done, only the finishing 
 from typing import List
 import time
 
-from .constants import BANNER, HELP
-from .models import SearchResult, Searcher
+from constants import BANNER, HELP
+from models import (SearchResult, Searcher)
 
-from .file_utilities import load_config, load_sonnets, Configuration
+from file_utilities import load_config, load_sonnets, Configuration
 
 
 def print_results(

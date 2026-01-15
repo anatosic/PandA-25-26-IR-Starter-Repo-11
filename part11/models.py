@@ -8,7 +8,7 @@ class Sonnet:
         self.lines = sonnet_data["lines"]
 
         # ToDo 1: Make sure the sonnet has an attribute id that contains the number of the Sonnet as an int
-        #self.id =
+        self.id = int(self.title.split()[1].replace(":", ""))
 
     @staticmethod
     def find_spans(text: str, pattern: str):
@@ -66,9 +66,14 @@ class Index:
         self.dictionary = {}
 
         for sonnet in sonnets:
+            for token, pos in self.tokenize(sonnet.title):
+                self._add_token(sonnet.id, token, None, pos)
+
+            for line_no, line in enumerate(sonnet.lines):
+                for token, pos in self.tokenize(line):
+                    self._add_token(sonnet.id, token, line_no, pos)
             # ToDo 2: Implement logic of adding tokens to the index. Use the pre-defined methods tokenize and
             #  _add_token to do so. Index the title and the lines of the sonnet.
-            pass # Remove the pass keyword and replace it with your code
 
     @staticmethod
     def tokenize(text):
@@ -189,7 +194,14 @@ class Index:
                     sonnet = self.sonnets[doc_id]
 
                     # ToDo 3: Based on the posting create the corresponding SearchResult instance
-                    result = None # Replace with code to create the correct SearchResult instance
+                    if posting.line_no is None:
+                        spans = [(posting.position, posting.position + len(token))]
+                        result = SearchResult(sonnet.title, spans, [], 1)
+                    else:
+                        spans = [(posting.position, posting.position + len(token))]
+                        lm = LineMatch(posting.line_no + 1, sonnet.lines[posting.line_no], spans)
+                        result = SearchResult(sonnet.title, [], [lm], 1)
+
 
                     # At this point result contains the SearchResult corresponding to the posting - ready to be added
                     # to the results dictionary.
@@ -263,7 +275,21 @@ class Searcher:
             #         need to merge them independent of whether the current search mode is "AND" or "OR". But the "OR"
             #         mode will always contains all search results.
 
-            # Add your code here...
+            if not combined_results:
+                combined_results = results.copy()
+            else:
+                if search_mode == "AND":
+                    for doc_id in list(combined_results.keys()):
+                        if doc_id in results:
+                            combined_results[doc_id] = combined_results[doc_id].combine_with(results[doc_id])
+                        else:
+                            del combined_results[doc_id]
+                else:  # OR
+                    for doc_id, res in results.items():
+                        if doc_id in combined_results:
+                            combined_results[doc_id] = combined_results[doc_id].combine_with(res)
+                        else:
+                            combined_results[doc_id] = res
 
             # At this point combined_results contains a dictionary with the sonnet ID as key and the search result for
             # this sonnet. Just like the result you receive from the index, but combined for all words
